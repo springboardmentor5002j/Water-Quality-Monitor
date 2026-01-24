@@ -54,7 +54,7 @@ def geocode_location(location: str):
 # ------------------------
 def ingest_cpcb_data(db: Session, limit: int = 50, lat: float | None = None, lon: float | None = None, radius_km: float = 1000):
     try:
-        r = requests.get(CPCB_URL, timeout=30)
+        r = requests.get(CPCB_URL, timeout=60)
         r.raise_for_status()
     except Exception as e:
         print(f"Failed to fetch CPCB CSV: {e}", flush=True)

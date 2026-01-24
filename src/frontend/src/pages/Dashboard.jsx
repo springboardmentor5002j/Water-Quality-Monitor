@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [verifiedReports, setVerifiedReports] = useState([]);
   const [role, setRole] = useState("");
   const [showTable, setShowTable] = useState("stations");
+  const [alerts, setAlerts] = useState([]);
 
   const BASE_URL = "http://127.0.0.1:8000";
 
@@ -58,6 +59,7 @@ export default function Dashboard() {
         // always set center to user's location first
         setCenter(null); // will be updated by geocode/fallback
         geocodePlace(data.location, true);
+        fetchAlerts(data.location);
       }
     };
 
@@ -76,9 +78,10 @@ export default function Dashboard() {
 
       if (res.ok) {
         const geo = await res.json();
-        if (geo.lat && geo.lon) {
+        if (typeof geo.lat === "number" && typeof geo.lon === "number"){
           setCenter([geo.lat, geo.lon]);
           fetchStationsWithReadings([geo.lat, geo.lon]);
+          fetchAlerts(place); 
           setVerifiedReports([]);
           setShowTable("stations");
           return;
@@ -94,11 +97,11 @@ export default function Dashboard() {
   };
 
   // ---------------- STATIONS ----------------
-  const fetchStationsWithReadings = async ([lat, lon]) => {
+  const fetchStationsWithReadings = async ([lat, lon], location) => {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(
-        `${BASE_URL}/stations/by_location_full?lat=${lat}&lon=${lon}&radius_km=1000`,
+        `${BASE_URL}/stations/by_location_full?lat=${lat}&lon=${lon}&location=${encodeURIComponent(location)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
@@ -120,7 +123,7 @@ export default function Dashboard() {
 
       const data = await res.json();
       setStations(data.stations || []);
-
+      fetchAlerts(location);
       if (data.user_location) {
         setCenter([data.user_location.latitude, data.user_location.longitude]);
       } else if (forceMapCenter) {
@@ -156,6 +159,13 @@ export default function Dashboard() {
       setVerifiedReports([]);
     }
   };
+const fetchAlerts = async (location) => {
+  const res = await fetch(
+    `${BASE_URL}/alerts/by_location?location=${encodeURIComponent(location)}`
+  );
+  const data = await res.json();
+  setAlerts(data.alerts || []);
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -200,9 +210,15 @@ export default function Dashboard() {
             >
               Verified Reports
             </button>
+            <Link
+                to="/alerts"
+                className="block w-full text-center p-2 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-all"
+              >
+                🚨 Alerts {alerts.length > 0 && `(${alerts.length})`}
+            </Link>
           </div>
         </aside>
-
+        
         {/* MAIN */}
         <main className="bg-white p-6 rounded shadow">
           <div className="flex gap-2 mb-4">
@@ -219,6 +235,23 @@ export default function Dashboard() {
               Search
             </button>
           </div>
+
+              {/* ALERTS */}
+          {alerts.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-red-600">🚨 Alerts</h3>
+              {alerts.slice(0, 3).map(a => (
+                <div key={a.id} className="bg-red-50 border-l-4 border-red-500 p-2 mb-2">
+                  <strong>{a.type.replace("_", " ")}</strong>
+                  <p>{a.message}</p>
+                </div>
+              ))}
+              <Link to="/alerts" className="text-blue-600 text-sm">
+                View all alerts →
+              </Link>
+            </div>
+          )}
+
 
           {/* MAP – always visible */}
           <div className="h-[400px] mb-6">

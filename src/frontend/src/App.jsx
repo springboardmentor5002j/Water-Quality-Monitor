@@ -12,6 +12,7 @@ import React from "react";
 import ReportDetails from "./pages/ReportDetails";
 import ForgotPassword from "./pages/forgotPassword";
 import ResetPassword from "./pages/resetPassword";
+import Alerts from "./pages/alerts";
 export default function App() {
   return (
     <div
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/logout" element={<Logout />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/alerts" element={<Alerts />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 

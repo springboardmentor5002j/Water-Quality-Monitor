@@ -28,9 +28,9 @@ class UserRole(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
-    email = Column(String(255), unique=True, index=True)
+    email = Column(String(255), unique=True)
     password = Column(String(255))
     role = Column(Enum(UserRole), default=UserRole.citizen)
     location = Column(String(255))
@@ -53,7 +53,7 @@ class ReportStatus(str, enum.Enum):
 # -------------------------------------
 class Report(Base):
     __tablename__ = "reports"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     photo_url = Column(String(500), nullable=False)
     location = Column(String(255), nullable=False)
@@ -82,7 +82,7 @@ class ReadingParameter(str, enum.Enum):
 class WaterStation(Base):
     __tablename__ = "water_stations"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     location = Column(String(255), nullable=False)
     latitude = Column(Numeric)
@@ -99,7 +99,7 @@ class WaterStation(Base):
 class StationReading(Base):
     __tablename__ = "station_readings"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     station_id = Column(Integer, ForeignKey("water_stations.id"))
     parameter = Column(Enum(ReadingParameter))
     value = Column(Numeric)
@@ -123,7 +123,7 @@ class AlertType(str, enum.Enum):
 class Alert(Base):
     __tablename__ = "alerts"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     type = Column(Enum(AlertType))
     message = Column(Text)
     location = Column(String(255))
@@ -136,7 +136,7 @@ class Alert(Base):
 class Collaboration(Base):
     __tablename__ = "collaborations"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     ngo_name = Column(String(255))
     project_title = Column(String(255))
     description = Column(Text)

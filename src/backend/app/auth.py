@@ -168,3 +168,4 @@ def confirm_reset_password(data: PasswordResetConfirm, db: Session = Depends(get
     user.password = get_password_hash(data.new_password)
     db.commit()
     return {"message": "Password reset successful"}
+

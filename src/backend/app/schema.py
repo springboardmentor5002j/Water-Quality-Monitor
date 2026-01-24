@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
-
+from pydantic import BaseModel
+from datetime import datetime
+from enum import Enum
 class UserCreate(BaseModel):
     name: Optional[str] = None
     email: EmailStr
@@ -72,3 +74,24 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
+
+
+class AlertTypeEnum(str, Enum):
+    boil_notice = "boil_notice"
+    contamination = "contamination"
+    outage = "outage"
+
+class AlertCreate(BaseModel):
+    type: AlertTypeEnum
+    message: str
+    location: str
+
+class AlertResponse(BaseModel):
+    id: int
+    type: AlertTypeEnum
+    message: str
+    location: str
+    issued_at: datetime
+
+    class Config:
+        orm_mode = True

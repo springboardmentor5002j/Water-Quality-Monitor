@@ -7,9 +7,10 @@ from .auth import router as auth_router
 from .routers.dashboard import router as dashboard_router
 from .routers.stations import router as station_router
 from .database import Base, engine
-
+from .routers.alerts import router as alerts_router
 # Create tables
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine, checkfirst=True)
+
 
 app = FastAPI()
 
@@ -38,3 +39,4 @@ app.include_router(auth_router, prefix="/auth")
 app.include_router(report_router)
 app.include_router(station_router)
 app.include_router(dashboard_router)
+app.include_router(alerts_router)

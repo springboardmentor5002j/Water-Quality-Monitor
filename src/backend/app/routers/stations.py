@@ -7,7 +7,7 @@ from ..api_fetch.openaq import ingest_openaq_data
 from ..api_fetch.epa import ingest_epa_data
 import math
 from ..auth import get_current_user
-
+from ..models.alerts import Alert
 router = APIRouter(prefix="/stations", tags=["Stations"])
 
 # -------------------------
@@ -75,7 +75,8 @@ def get_stations_with_readings(
     # 3️⃣ If no stations → fetch dynamically from APIs
     if not nearby_stations:
         try:
-            print(f"No stations near '{location}', fetching dynamically...", flush=True)
+            print(f"No stations near coordinates ({user_lat}, {user_lon}), fetching dynamically...",flush=True)
+
             # 🔹 Pass user lat/lon & radius to dynamically fetch only relevant stations
             ingest_cpcb_data(db, limit=50)                       # CPCB: India stations
             ingest_openaq_data(db, limit=50, lat=user_lat, lon=user_lon, radius_km=radius_km)  # OpenAQ filtered
@@ -134,8 +135,14 @@ def get_stations_with_readings(
             "latest_readings": latest_readings,
             "verified_reports": reports_list
         })
-
+    alerts = (
+        db.query(Alert)
+        .filter(Alert.location.ilike(f"%{s.location}%"))
+        .all()
+    )
     # 🔹 Return even if no stations (frontend map will show user location)
+    
+
     return {
         "count": len(result),
         "user_location": {"latitude": user_lat, "longitude": user_lon},
