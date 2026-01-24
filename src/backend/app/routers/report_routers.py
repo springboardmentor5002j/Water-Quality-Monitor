@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, Query, HTTPExcep
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..auth import get_current_user
-from ..models import Report, ReportStatus, User
+from app.user_models import Report, ReportStatus, User 
 import os, shutil, uuid
 
 router = APIRouter(prefix="/reports", tags=["Reports"])

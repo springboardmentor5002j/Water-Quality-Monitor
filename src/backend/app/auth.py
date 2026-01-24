@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr
 from jose import JWTError, jwt 
 from passlib.context import CryptContext
 from .database import get_db
-from .models import User
+from app.user_models import User
 from .schema import (
     UserCreate,
     UserPublic,

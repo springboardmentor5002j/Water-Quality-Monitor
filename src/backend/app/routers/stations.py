@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
-from ..models import WaterStation, StationReading, ReadingParameter, Report, ReportStatus, User
+from app.database import get_db
+from app.user_models import WaterStation, StationReading, ReadingParameter, Report, ReportStatus, User
 from ..api_fetch.cpcb import ingest_cpcb_data, geocode_location
 from ..api_fetch.openaq import ingest_openaq_data
 from ..api_fetch.epa import ingest_epa_data
 import math
-from ..auth import get_current_user
-from ..models.alerts import Alert
+from app.auth import get_current_user
+from app.models.alert_model import Alert
 router = APIRouter(prefix="/stations", tags=["Stations"])
 
 # -------------------------

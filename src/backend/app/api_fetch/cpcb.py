@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 import csv, io, requests
-from ..models import WaterStation, StationReading
+from app.user_models import WaterStation, StationReading
 import requests as req_module  # for geocoding
 import math
 

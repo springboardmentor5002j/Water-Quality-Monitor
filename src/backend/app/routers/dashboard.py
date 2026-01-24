@@ -2,10 +2,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import WaterStation, StationReading, Report, ReportStatus
+from app.user_models import WaterStation, StationReading, Report, ReportStatus
 from math import radians, cos, sin, asin, sqrt
 
-router = APIRouter()
+router = APIRouter() 
 
 # -----------------------------
 # Haversine formula to calculate distance in km

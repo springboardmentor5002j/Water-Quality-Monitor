@@ -12,7 +12,7 @@ class AlertType(enum.Enum):
 
 class Alert(Base):
     __tablename__ = "alerts"
-
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     type = Column(Enum(AlertTypeEnum), nullable=False)
     message = Column(Text, nullable=False)

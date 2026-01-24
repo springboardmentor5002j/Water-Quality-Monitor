@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 import requests
-from ..models import WaterStation, StationReading
+from app.user_models import WaterStation, StationReading
 import requests as req_module
 import math
 
