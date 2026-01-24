@@ -58,6 +58,7 @@ export default function Dashboard() {
         setUserLocation(data.location);
         // always set center to user's location first
         setCenter(null); // will be updated by geocode/fallback
+        localStorage.setItem("userLocation", data.location);
         geocodePlace(data.location, true);
         fetchAlerts(data.location);
       }
@@ -70,7 +71,7 @@ export default function Dashboard() {
   // forceMapCenter = true: always set center even if geocode fails
   const geocodePlace = async (place, forceMapCenter = false) => {
     if (!place) return;
-
+    localStorage.setItem("userLocation", place);
     try {
       const res = await fetch(
         `${BASE_URL}/geo/geocode?place=${encodeURIComponent(place)}`
@@ -80,7 +81,7 @@ export default function Dashboard() {
         const geo = await res.json();
         if (typeof geo.lat === "number" && typeof geo.lon === "number"){
           setCenter([geo.lat, geo.lon]);
-          fetchStationsWithReadings([geo.lat, geo.lon]);
+          fetchStationsWithReadings([geo.lat, geo.lon], place);
           fetchAlerts(place); 
           setVerifiedReports([]);
           setShowTable("stations");
@@ -112,32 +113,29 @@ export default function Dashboard() {
   };
 
   const fetchStationsByLocation = async (location, forceMapCenter = false) => {
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch(
-        `${BASE_URL}/stations/by_location_full?location=${encodeURIComponent(
-          location
-        )}&radius_km=1000`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  const token = localStorage.getItem("token");
+  localStorage.setItem("userLocation", location);
+  try {
+    const res = await fetch(
+      `${BASE_URL}/stations/by_location_full?location=${encodeURIComponent(location)}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      const data = await res.json();
-      setStations(data.stations || []);
-      fetchAlerts(location);
-      if (data.user_location) {
-        setCenter([data.user_location.latitude, data.user_location.longitude]);
-      } else if (forceMapCenter) {
-        // fallback: use last typed location on map even if backend fails
-        setCenter([20, 77]); // default if no backend info
-      }
+    const data = await res.json();
+    setStations(data.stations || []);
+    
+    // 🔥 FIX: Set alerts directly from the response
+    setAlerts(data.alerts || []); 
 
-      setVerifiedReports([]);
-      setShowTable("stations");
-    } catch {
-      setStations([]);
-      if (forceMapCenter) setCenter([20, 77]); // always show map
+    if (data.user_location) {
+      setCenter([data.user_location.latitude, data.user_location.longitude]);
     }
-  };
+    setShowTable("stations");
+  } catch (err) {
+    console.error("Fetch error", err);
+    setStations([]);
+  }
+};
 
   // ---------------- VERIFIED REPORTS ----------------
   const fetchVerifiedReports = async () => {
@@ -214,7 +212,7 @@ const fetchAlerts = async (location) => {
                 to="/alerts"
                 className="block w-full text-center p-2 rounded bg-red-100 text-red-700 hover:bg-red-200 transition-all"
               >
-                🚨 Alerts {alerts.length > 0 && `(${alerts.length})`}
+                 Alerts {alerts.length > 0 && `(${alerts.length})`}
             </Link>
           </div>
         </aside>
@@ -236,22 +234,36 @@ const fetchAlerts = async (location) => {
             </button>
           </div>
 
-              {/* ALERTS */}
-          {alerts.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-red-600">🚨 Alerts</h3>
-              {alerts.slice(0, 3).map(a => (
-                <div key={a.id} className="bg-red-50 border-l-4 border-red-500 p-2 mb-2">
-                  <strong>{a.type.replace("_", " ")}</strong>
-                  <p>{a.message}</p>
-                </div>
-              ))}
-              <Link to="/alerts" className="text-blue-600 text-sm">
-                View all alerts →
-              </Link>
-            </div>
-          )}
-
+         {/* ALERTS SECTION */}
+{alerts.length > 0 && (
+  <div className="mb-6">
+    <h3 className="text-lg font-bold text-red-600 mb-2 flex items-center gap-2">
+      🚨 Active Alerts for {userLocation}
+    </h3>
+    <div className="grid gap-3">
+      {alerts.slice(0, 5).map((a) => (
+        <div 
+          key={a.id} 
+          className={`border-l-4 p-4 rounded shadow-sm ${
+            a.type === 'contamination' 
+              ? 'bg-red-50 border-red-600 text-red-900' 
+              : 'bg-orange-50 border-orange-500 text-orange-900'
+          }`}
+        >
+          <div className="flex justify-between items-start">
+            <span className="font-bold uppercase text-xs tracking-wider">
+              {a.type.replace("_", " ")}
+            </span>
+          </div>
+          <p className="text-sm mt-1 font-medium">{a.message}</p>
+        </div>
+      ))}
+    </div>
+    <Link to="/alerts" className="text-blue-600 text-sm mt-2 inline-block hover:underline">
+      View full alert history for India →
+    </Link>
+  </div>
+)}
 
           {/* MAP – always visible */}
           <div className="h-[400px] mb-6">
