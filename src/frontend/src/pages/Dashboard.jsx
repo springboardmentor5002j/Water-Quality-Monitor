@@ -158,11 +158,22 @@ export default function Dashboard() {
     }
   };
 const fetchAlerts = async (location) => {
-  const res = await fetch(
-    `${BASE_URL}/alerts/by_location?location=${encodeURIComponent(location)}`
-  );
-  const data = await res.json();
-  setAlerts(data.alerts || []);
+  try {
+    const res = await fetch(
+      `${BASE_URL}/alerts/by_location?location=${encodeURIComponent(location)}`
+    );
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      setAlerts(data);
+    } else if (data.alerts) {
+      setAlerts(data.alerts);
+    } else {
+      setAlerts([]);
+    }
+  } catch (err) {
+    console.error("Alert fetch failed:", err);
+    setAlerts([]);
+  }
 };
 
   return (

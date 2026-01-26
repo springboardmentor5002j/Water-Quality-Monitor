@@ -44,13 +44,13 @@ def trigger_auto_alert(db: Session, station_name: str, location: str, parameter:
 
 @router.get("/all")
 def get_all_alerts(db: Session = Depends(get_db)):
-    """Fetches every alert for the dedicated Alerts Page"""
-    return db.query(Alert).order_by(Alert.issued_at.desc()).all()
+    alerts = db.query(Alert).order_by(Alert.issued_at.desc()).all()
+    return {"alerts": alerts}
 
 @router.get("/by_location")
 def get_alerts_by_location(location: str, db: Session = Depends(get_db)):
-    """Used by the Dashboard for specific searches"""
-    return db.query(Alert).filter(Alert.location.ilike(f"%{location}%")).order_by(Alert.issued_at.desc()).all()
+    alerts = db.query(Alert).filter(Alert.location.ilike(f"%{location}%")).order_by(Alert.issued_at.desc()).all()
+    return {"alerts": alerts}
 
 @router.delete("/clear_all")
 def clear_all_alerts(db: Session = Depends(get_db), user=Depends(get_current_user)):
