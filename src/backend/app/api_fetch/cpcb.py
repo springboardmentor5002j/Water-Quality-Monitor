@@ -8,7 +8,7 @@ import math
 CPCB_URL = "https://data.gov.in/sites/default/files/Water_Quality_Indicators.csv"
 
 CPCB_PARAM_MAP = {
-    "pH": "pH",
+    "ph": "ph",
     "Lead": "lead",
     "Arsenic": "arsenic",
     "Turbidity": "turbidity",

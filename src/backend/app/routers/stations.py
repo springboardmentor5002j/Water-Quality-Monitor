@@ -91,9 +91,14 @@ def get_stations_with_readings(
     for s in nearby_stations:
         latest_readings = []
         for param in ReadingParameter:
+           
+            print("ENUM NAME:", param.name)
+            print("ENUM VALUE:", param.value)
+
             reading = (
                 db.query(StationReading)
-                .filter(StationReading.station_id == s.id, StationReading.parameter == param)
+                .filter(StationReading.station_id == s.id, StationReading.parameter == ReadingParameter(param.value)
+)
                 .order_by(StationReading.recorded_at.desc())
                 .first()
             )

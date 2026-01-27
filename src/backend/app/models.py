@@ -14,6 +14,8 @@ from sqlalchemy.orm import relationship
 import enum
 
 from .database import Base
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy.sql import func
 
 # -------------------------------------
 # USER ROLES
@@ -68,12 +70,13 @@ class Report(Base):
 # -------------------------------------
 # READING PARAMETERS ENUM
 # -------------------------------------
-class ReadingParameter(str, enum.Enum):
-    pH = "pH"
-    lead = "lead"
-    arsenic = "arsenic"
-    turbidity = "turbidity"
-    DO = "DO"  # Dissolved Oxygen
+class ReadingParameter(enum.Enum):
+    ph = "ph"
+    temperature = "temperature"
+    conductance = "conductance"
+    discharge = "discharge"
+    dissolved_oxygen = "dissolved_oxygen"
+
 
 
 # -------------------------------------
@@ -133,11 +136,16 @@ class Alert(Base):
 # -------------------------------------
 # MODEL: COLLABORATIONS
 # -------------------------------------
+
+
 class Collaboration(Base):
     __tablename__ = "collaborations"
 
     id = Column(Integer, primary_key=True, index=True)
-    ngo_name = Column(String(255))
-    project_title = Column(String(255))
-    description = Column(Text)
+    ngo_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    station_id = Column(Integer, ForeignKey("water_stations.id"), nullable=False)
+    project_name = Column(String, nullable=False)
+    contact_email = Column(String, nullable=False)
+
+    # ✅ THIS LINE FIXES EVERYTHING
     created_at = Column(DateTime(timezone=True), server_default=func.now())

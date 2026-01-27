@@ -7,12 +7,14 @@ import math
 
 EPA_STATION_URL = "https://www.waterqualitydata.us/data/Station/search"
 EPA_RESULT_URL = "https://www.waterqualitydata.us/data/Result/search"
-
 EPA_PARAM_MAP = {
-    "pH": "pH",
-    "Lead": "lead",
-    "Arsenic": "arsenic",
+    "pH": "ph",                     # ✅ lowercase
+    "Temperature, water": "temperature",
+    "Specific conductance": "conductance",
+    "Discharge": "discharge",
+    "Dissolved oxygen (DO)": "dissolved_oxygen",
 }
+
 
 # -------------------------
 # Geocode location using Nominatim

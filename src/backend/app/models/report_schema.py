@@ -17,3 +17,6 @@ class ReportOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+

@@ -31,6 +31,22 @@ export default function Dashboard() {
   const [verifiedReports, setVerifiedReports] = useState([]);
   const [role, setRole] = useState("");
   const [showTable, setShowTable] = useState("stations");
+  const [selectedStation, setSelectedStation] = useState(null);
+  const [showNgoCollab, setShowNgoCollab] = useState(false);
+const [ngoCollaborations, setNgoCollaborations] = useState([]);
+const [selectedProject, setSelectedProject] = useState(null);
+const [availableNgos, setAvailableNgos] = useState([]);
+const [selectedNgos, setSelectedNgos] = useState([]);
+const [allNgos, setAllNgos] = useState([]);
+const [selectedNgo, setSelectedNgo] = useState(null);
+const [availableStations, setAvailableStations] = useState([]);
+
+
+
+
+
+
+
 
   const BASE_URL = "http://127.0.0.1:8000";
 
@@ -135,6 +151,112 @@ export default function Dashboard() {
       if (forceMapCenter) setCenter([20, 77]); // always show map
     }
   };
+//-----------------fetch ngo collaborators----------------
+const fetchNgoCollaborations = async () => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(
+     `${BASE_URL}/dashboard/ngo/my-collaborations`
+,   // ✅ FIXED PATH
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+    setNgoCollaborations(data.collaborations || []);
+    setShowTable("ngo-collab");              // ✅ KEEP VIEW VISIBLE
+  } catch (err) {
+    console.error("Failed to fetch NGO collaborations", err);
+    setNgoCollaborations([]);
+  }
+};
+
+
+const fetchAvailableNgos = async (projectId) => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(
+      `${BASE_URL}/admin/projects/${projectId}/available-ngos`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const data = await res.json();
+    setAvailableNgos(data.ngos || []);
+  } catch (err) {
+    console.error("Failed to fetch NGOs", err);
+    setAvailableNgos([]);
+  }
+};
+
+
+const submitNgoCollaboration = async () => {
+  const token = localStorage.getItem("token");
+
+  try {
+    await fetch(`${BASE_URL}/admin/projects/collaborate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        project_id: selectedProject.id,
+        ngo_ids: selectedNgos,
+      }),
+    });
+
+    alert("NGOs successfully collaborated!");
+    setShowTable("projects");
+    setSelectedNgos([]);
+  } catch (err) {
+    alert("Failed to collaborate NGOs");
+  }
+};
+
+const fetchAllNgos = async () => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(`${BASE_URL}/dashboard/admin/ngos`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await res.json();
+    console.log("ALL NGOs:", data); // 🔍 IMPORTANT
+    setAllNgos(data.ngos || []);
+  } catch (err) {
+    console.error("Failed to fetch NGOs", err);
+    setAllNgos([]);
+  }
+};
+
+const fetchAvailableStations = async () => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(
+      `${BASE_URL}/dashboard/stations/by_location_full?lat=20&lon=77&radius_km=50000`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const data = await res.json();
+    setAvailableStations(data.stations || []);
+  } catch (err) {
+    console.error("Failed to fetch stations", err);
+    setAvailableStations([]);
+  }
+};
 
   // ---------------- VERIFIED REPORTS ----------------
   const fetchVerifiedReports = async () => {
@@ -156,6 +278,44 @@ export default function Dashboard() {
       setVerifiedReports([]);
     }
   };
+
+
+
+
+
+  // ---------------- ASSIGN NGO TO STATION (ADMIN) ----------------
+const assignNgoToStation = async (ngo, station) => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch(`${BASE_URL}/dashboard/admin/collaborations`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ngo_id: ngo.id,
+        station_id: station.id,
+        project_name: station.name,
+        contact_email: ngo.email,
+      }),
+    });
+
+    if (!res.ok) throw new Error("Failed to assign NGO");
+
+    alert(`${ngo.name} assigned to ${station.name}`);
+
+    // reset UI state
+    setShowTable("collaborate-ngos");
+    setSelectedNgo(null);
+    setAvailableStations([]);
+  } catch (err) {
+    console.error(err);
+    alert("Error assigning NGO");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -200,6 +360,58 @@ export default function Dashboard() {
             >
               Verified Reports
             </button>
+
+
+
+
+{role === "ngo" && (
+ <button
+  onClick={() => {
+    fetchNgoCollaborations();
+     setShowNgoCollab(true);   // ✅ CALL API
+    fetchAllNgos();
+setShowTable("collaborate-ngos");
+  }}
+  className={`w-full p-2 rounded transition-all ${
+    showNgoCollab
+      ? "bg-green-600 text-white"
+      : "bg-gray-200 hover:bg-green-100"
+  }`}
+>
+  🤝 NGO Collaboration
+</button>
+
+)}
+
+
+{role?.toLowerCase() === "admin" && (
+  <button
+    onClick={() => {
+      // 🔍 DEBUG
+                 // ✅ FULL PROJECT OBJECT
+      fetchAllNgos(); // ✅ ID ONLY
+      setShowTable("collaborate-ngos");
+    }}
+    className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 relative z-50"
+  >
+    🤝 Collaborate NGOs
+  </button>
+)}
+
+
+
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                navigate("/login");
+              }}
+              className="w-full p-2 rounded bg-red-500 text-white hover:bg-red-600"
+            >
+              Logout
+            </button>
+            
+
+
           </div>
         </aside>
 
@@ -251,6 +463,7 @@ export default function Dashboard() {
                     </Marker>
                   )
               )}
+              
             </MapContainer>
           </div>
 
@@ -266,19 +479,24 @@ export default function Dashboard() {
                 </div>
               )}
               {stations.map((s) => (
-                <div key={s.id} className="border p-4 rounded mb-3 bg-gray-50">
-                  <p><strong>ID:</strong> {s.id}</p>
-                  <p><strong>Name:</strong> {s.name}</p>
-                  <p><strong>Location:</strong> {s.location}</p>
-                  <p><strong>Latitude:</strong> {s.latitude}</p>
-                  <p><strong>Longitude:</strong> {s.longitude}</p>
-                  <p><strong>Managed By:</strong> {s.managed_by}</p>
-                  <p>
-                    <strong>Created At:</strong>{" "}
-                    {new Date(s.created_at).toLocaleString()}
-                  </p>
-                </div>
-              ))}
+  <div key={s.id} className="border p-4 rounded mb-3 bg-gray-50">
+    <p><strong>ID:</strong> {s.id}</p>
+    <p><strong>Name:</strong> {s.name}</p>
+    <p><strong>Location:</strong> {s.location}</p>
+    <p><strong>Latitude:</strong> {s.latitude}</p>
+    <p><strong>Longitude:</strong> {s.longitude}</p>
+    <p><strong>Managed By:</strong> {s.managed_by}</p>
+    <p>
+      <strong>Created At:</strong>{" "}
+      {new Date(s.created_at).toLocaleString()}
+    </p>
+
+    {/* 👉 NGO–NGO Collaboration (NGO only) */}
+    
+
+  </div>
+))}
+
             </>
           )}
 
@@ -351,6 +569,108 @@ export default function Dashboard() {
               ))}
             </>
           )}
+
+         {showNgoCollab && role === "ngo" && (
+  <div className="mt-6 bg-white border rounded p-4">
+    <h3 className="text-lg font-semibold text-green-700 mb-3">
+      My Assigned Projects
+    </h3>
+
+    {ngoCollaborations.length === 0 ? (
+      <div className="p-4 bg-yellow-50 border rounded">
+        No projects assigned to your NGO yet.
+      </div>
+    ) : (
+      ngoCollaborations.map((c, idx) => (
+        <div key={idx} className="border p-4 rounded mb-3 bg-gray-50">
+          <p><strong>Project:</strong> {c.project_name}</p>
+          <p><strong>Station:</strong> {c.station_name}</p>
+          <p><strong>Location:</strong> {c.station_location}</p>
+          <p><strong>Contact:</strong> {c.contact_email}</p>
+          {c.created_at && (
+            <p className="text-sm text-gray-500">
+              Assigned on: {new Date(c.created_at).toLocaleString()}
+            </p>
+          )}
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+{showTable === "collaborate-ngos" && role === "admin" && (
+  
+  <div className="mt-6 border rounded p-4 bg-white">
+    <h3 className="text-lg font-semibold text-green-700 mb-3">
+      Collaborate NGOs
+    </h3>
+
+    {allNgos.length === 0 ? (
+      <div className="p-3 bg-yellow-50 border rounded">
+        No NGOs found.
+      </div>
+    ) : (
+      allNgos.map((ngo) => (
+        <div
+          key={ngo.id}
+          className="flex justify-between items-center border p-3 rounded mb-2 bg-gray-50"
+        >
+          <div>
+            <p className="font-semibold">{ngo.name}</p>
+            <p className="text-sm text-gray-600">{ngo.email}</p>
+          </div>
+
+          {/* 👉 CLICKING THIS SHOWS STATIONS */}
+          <button
+            onClick={() => {
+              setSelectedNgo(ngo);          // ✅ store NGO
+              fetchAvailableStations();     // ✅ load stations
+              setShowTable("assign-station");
+            }}
+            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Assign
+          </button>
+        </div>
+      ))
+    )}
+  </div>
+)}
+{showTable === "assign-station" && role === "admin" && selectedNgo && (
+  <div className="mt-6 border rounded p-4 bg-white">
+    <h3 className="text-lg font-semibold text-blue-700 mb-3">
+      Assign <span className="text-black">{selectedNgo.name}</span> to Station
+    </h3>
+
+    {availableStations.length === 0 ? (
+      <div className="p-3 bg-yellow-50 border rounded">
+        No stations found.
+      </div>
+    ) : (
+      availableStations.map((station) => (
+        <div
+          key={station.id}
+          className="flex justify-between items-center border p-3 rounded mb-2 bg-gray-50"
+        >
+          <div>
+            <p className="font-semibold">{station.name}</p>
+            <p className="text-sm text-gray-600">{station.location}</p>
+          </div>
+
+          <button
+            onClick={() => assignNgoToStation(selectedNgo, station)}
+            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Assign
+          </button>
+        </div>
+      ))
+    )}
+  </div>
+)}
+
+
+
         </main>
       </div>
     </div>

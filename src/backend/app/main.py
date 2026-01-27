@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from .routers.report_routers import router as report_router
+from app.routers.report_routers import router as report_router
 from .auth import router as auth_router
 from .routers.dashboard import router as dashboard_router
 from .routers.stations import router as station_router
