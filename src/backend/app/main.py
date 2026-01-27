@@ -8,6 +8,7 @@ from .routers.dashboard import router as dashboard_router
 from .routers.stations import router as station_router
 from .database import Base, engine
 from .routers.alerts import router as alerts_router
+from .routers.reading_router import router as readings_router
 # Create tables
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
@@ -30,6 +31,10 @@ print("Files in upload dir:", os.listdir(UPLOAD_DIR))
 UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../uploads"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+@app.get("/")
+def home():
+    return {"message": "Water Quality API Running"}
+
 from .routers.geocode import router as geocode_router
 
 app.include_router(geocode_router)
@@ -39,3 +44,4 @@ app.include_router(report_router)
 app.include_router(station_router)
 app.include_router(dashboard_router)
 app.include_router(alerts_router)
+app.include_router(readings_router)

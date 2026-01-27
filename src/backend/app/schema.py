@@ -95,3 +95,9 @@ class AlertResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class ReadingHistoryResponse(BaseModel):
+    recorded_at: datetime
+    value: float
+
+    class Config:
+        from_attributes = True

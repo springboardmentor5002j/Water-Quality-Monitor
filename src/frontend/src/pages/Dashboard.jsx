@@ -225,6 +225,13 @@ const fetchAlerts = async (location) => {
               >
                  Alerts {alerts.length > 0 && `(${alerts.length})`}
             </Link>
+            <Link
+  to="/historical"
+  className="block w-full text-center p-2 rounded bg-green-100 text-green-700 hover:bg-green-200 transition-all"
+>
+  📈 Historical Data
+</Link>
+
           </div>
         </aside>
         
