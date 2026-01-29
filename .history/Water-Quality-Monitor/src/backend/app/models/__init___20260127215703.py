@@ -1,0 +1,2 @@
+from .ngo import NGO
+
