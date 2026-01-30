@@ -36,7 +36,8 @@ class User(Base):
     location = Column(String(255))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    reports = relationship("Report", back_populates="user")
+    reports = relationship("app.user_models.Report", back_populates="user")
+
 
 
 # -------------------------------------
@@ -62,7 +63,8 @@ class Report(Base):
     status = Column(Enum(ReportStatus), default=ReportStatus.pending)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    user = relationship("User", back_populates="reports")
+    user = relationship("app.user_models.User", back_populates="reports")
+
 
 
 # -------------------------------------

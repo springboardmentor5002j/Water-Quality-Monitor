@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import axios from "axios";
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -250,6 +251,18 @@ const fetchAlerts = async (location) => {
             >
               Search
             </button>
+
+            <button
+              onClick={async () => {
+              await axios.post("http://127.0.0.1:8000/predictive/run");
+              alert("Predictive Alert Generated");
+              fetchAlerts(userLocation);
+            }}
+            className="bg-red-600 text-white px-4 rounded"
+          >
+          Run Predictive Alerts
+        </button>
+
           </div>
 
          {/* ALERTS SECTION */}
@@ -419,3 +432,4 @@ const fetchAlerts = async (location) => {
     </div>
   );
 }
+

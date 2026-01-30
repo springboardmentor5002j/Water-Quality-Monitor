@@ -9,6 +9,9 @@ from .routers.stations import router as station_router
 from .database import Base, engine
 from .routers.alerts import router as alerts_router
 from .routers.reading_router import router as readings_router
+from app.routers.predictive import router as predictive_router
+
+
 # Create tables
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
@@ -45,3 +48,4 @@ app.include_router(station_router)
 app.include_router(dashboard_router)
 app.include_router(alerts_router)
 app.include_router(readings_router)
+app.include_router(predictive_router)
