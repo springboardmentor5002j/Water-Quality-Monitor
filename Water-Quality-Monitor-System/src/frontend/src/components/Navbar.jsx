@@ -3,7 +3,7 @@ import React from "react";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-  const { user, isLoggedIn } = useAuth(); 
+  const { logout } = useAuth();
 
   return (
     <nav className="bg-white shadow-md fixed w-full top-0 left-0 z-50">
@@ -14,25 +14,27 @@ export default function Navbar() {
         </h1>
 
         <div className="flex items-center space-x-8 text-gray-700 font-medium text-lg">
-          <Link to="/" className="hover:text-blue-600 transition">Home</Link>
 
-          {/* Show Reports only when logged in */}
-          {isLoggedIn && (
-            <Link to="/reports" className="hover:text-blue-600 transition">
-              My Reports
-            </Link>
-          )}
+          <Link to="/" className="hover:text-blue-600 transition">
+            Home
+          </Link>
 
-          {!isLoggedIn && (
-            <>
-              <Link to="/login" className="hover:text-blue-600 transition">Login</Link>
-              <Link to="/register" className="hover:text-blue-600 transition">Register</Link>
-            </>
-          )}
+          <Link to="/login" className="hover:text-blue-600 transition">
+            Login
+          </Link>
 
-          {isLoggedIn && (
-            <Link to="/logout" className="hover:text-blue-600 transition">Logout</Link>
-          )}
+          <Link to="/register" className="hover:text-blue-600 transition">
+            Register
+          </Link>
+
+          <Link
+            to="/login"
+            onClick={logout}
+            className="hover:text-blue-600 transition"
+          >
+            Logout
+          </Link>
+
         </div>
 
       </div>

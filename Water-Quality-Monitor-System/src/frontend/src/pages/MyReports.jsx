@@ -19,7 +19,7 @@ function MyReports() {
   const [reports, setReports] = useState([]);
   const [ngoLocation, setNgoLocation] = useState("");
 
-  const [filters, setFilters] = useState({
+  const [filters] = useState({
     username: "",
     location: "",
     water_source: "",
@@ -39,42 +39,62 @@ function MyReports() {
   /* ---------------- LOAD REPORTS ---------------- */
   async function loadReports() {
     try {
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
       const meRes = await fetch(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (!meRes.ok) {
+        navigate("/login");
+        return;
+      }
+
       const me = await meRes.json();
       setRole(me.role);
 
       let res;
+
       if (me.role === "admin" || me.role === "authority") {
         const query = new URLSearchParams(
           Object.fromEntries(
             Object.entries(filters).filter(([_, v]) => v && v !== "all")
           )
         ).toString();
+
         res = await getAllReports(token, query);
       } else {
         res = await getMyReports(token);
       }
 
-      setReports(res.data || []);
+      setReports(res?.data || []);
     } catch (err) {
-      console.error(err);
+      console.error("Error loading reports:", err);
       navigate("/login");
     }
   }
 
   useEffect(() => {
-    if (!token) navigate("/login");
     loadReports();
     // eslint-disable-next-line
   }, []);
 
   /* ---------------- NGO VERIFIED FILTER ---------------- */
   async function loadVerifiedByLocation() {
-    if (!ngoLocation) return alert("Enter location");
-    const data = await getVerifiedReportsByLocation(ngoLocation);
-    setReports(data || []);
+    if (!ngoLocation) {
+      alert("Enter location");
+      return;
+    }
+
+    try {
+      const data = await getVerifiedReportsByLocation(ngoLocation);
+      setReports(data || []);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   /* ---------------- ACTIONS ---------------- */
@@ -101,9 +121,20 @@ function MyReports() {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl font-bold mb-4">
-          {role.toUpperCase()} REPORTS
-        </h2>
+
+        {/* HEADER WITH BACK BUTTON */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">
+            {role.toUpperCase()} REPORTS
+          </h2>
+
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
 
         {/* NGO VERIFIED FILTER */}
         {role === "ngo" && (
@@ -141,7 +172,6 @@ function MyReports() {
               key={r.id}
               className="bg-white p-6 mb-4 rounded shadow flex gap-6"
             >
-              {/* ✅ IMAGE FIX (FINAL) */}
               <img
                 src={
                   r.photo_url?.startsWith("http")

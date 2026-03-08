@@ -4,6 +4,10 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+/* ---------------- ENV BASE URL ---------------- */
+const BASE_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 /* ---------------- LEAFLET ICON FIX ---------------- */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -35,33 +39,34 @@ export default function Dashboard() {
   const [alerts, setAlerts] = useState([]);
   const [role, setRole] = useState("");
   const [showTable, setShowTable] = useState("stations");
-  const [updatingIds, setUpdatingIds] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
-
-  const BASE_URL = "http://127.0.0.1:8000";
 
   /* ---------------- USER DETAILS ---------------- */
   useEffect(() => {
     const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return navigate("/login");
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return navigate("/login");
 
-      const res = await fetch(`${BASE_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+        const res = await fetch(`${BASE_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      if (res.status === 401) {
-        localStorage.removeItem("token");
-        navigate("/login");
-        return;
-      }
+        if (!res.ok) {
+          localStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
 
-      const data = await res.json();
-      setRole(data.role || "");
+        const data = await res.json();
+        setRole(data.role || "");
 
-      if (data.location) {
-        setUserLocation(data.location);
-        geocodePlace(data.location);
+        if (data.location) {
+          setUserLocation(data.location);
+          geocodePlace(data.location);
+        }
+      } catch (err) {
+        console.error("User fetch failed:", err);
       }
     };
 
@@ -72,49 +77,78 @@ export default function Dashboard() {
   const geocodePlace = async (place) => {
     if (!place) return;
 
-    const res = await fetch(
-      `${BASE_URL}/geo/geocode?place=${encodeURIComponent(place)}`
-    );
-    const geo = await res.json();
+    try {
+      const res = await fetch(
+        `${BASE_URL}/geo/geocode?place=${encodeURIComponent(place)}`
+      );
 
-    if (geo.lat && geo.lon) {
-      setCenter([geo.lat, geo.lon]);
-      fetchStationsWithReadings([geo.lat, geo.lon], place);
-      fetchAlerts(place);
-      setShowTable("stations");
+      if (!res.ok) throw new Error("Geocode failed");
+
+      const geo = await res.json();
+
+      if (geo.lat && geo.lon) {
+        setCenter([geo.lat, geo.lon]);
+        fetchStationsWithReadings([geo.lat, geo.lon], place);
+        fetchAlerts(place);
+        setShowTable("stations");
+      }
+    } catch (err) {
+      console.error("Geocode error:", err);
     }
   };
 
   /* ---------------- STATIONS ---------------- */
   const fetchStationsWithReadings = async ([lat, lon], location) => {
-    const token = localStorage.getItem("token");
-    const res = await fetch(
-      `${BASE_URL}/stations/by_location_full?lat=${lat}&lon=${lon}&location=${encodeURIComponent(
-        location
-      )}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const data = await res.json();
-    setStations(data.stations || []);
-    setAlerts(data.alerts || []);
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `${BASE_URL}/stations/by_location_full?lat=${lat}&lon=${lon}&location=${encodeURIComponent(
+          location
+        )}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!res.ok) throw new Error("Station fetch failed");
+
+      const data = await res.json();
+      setStations(data.stations || []);
+      setAlerts(data.alerts || []);
+    } catch (err) {
+      console.error("Station fetch error:", err);
+      setStations([]);
+      setAlerts([]);
+    }
   };
 
   /* ---------------- VERIFIED REPORTS ---------------- */
   const fetchVerifiedReports = async () => {
-    const token = localStorage.getItem("token");
-    if (!userLocation) return;
+    if (!["authority", "admin"].includes(role)) return;
 
-    setLoadingReports(true);
-    const res = await fetch(
-      `${BASE_URL}/stations/verified_reports_by_location?location=${encodeURIComponent(
-        userLocation
-      )}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    const data = await res.json();
-    setVerifiedReports(data.verified_reports || []);
-    setShowTable("reports");
-    setLoadingReports(false);
+    try {
+      const token = localStorage.getItem("token");
+      if (!userLocation) return;
+
+      setLoadingReports(true);
+
+      const res = await fetch(
+        `${BASE_URL}/stations/verified_reports_by_location?location=${encodeURIComponent(
+          userLocation
+        )}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!res.ok) throw new Error("Report fetch failed");
+
+      const data = await res.json();
+      setVerifiedReports(data.verified_reports || []);
+      setShowTable("reports");
+    } catch (err) {
+      console.error("Verified reports error:", err);
+      setVerifiedReports([]);
+    } finally {
+      setLoadingReports(false);
+    }
   };
 
   /* ===================== UI ===================== */
@@ -126,17 +160,18 @@ export default function Dashboard() {
           💧 Water Dashboard
         </span>
 
-        <Link className="nav-btn bg-blue-600 text-white" to="/reports/create">
+        <Link className={`${navBtn} bg-blue-600 text-white`} to="/reports/create">
           Submit Report
         </Link>
 
-        <Link className="nav-btn bg-slate-600 text-white" to="/reports/my">
+        <Link className={`${navBtn} bg-slate-600 text-white`} to="/reports/my">
           My Reports
         </Link>
 
-        {["ngo", "admin", "authority"].includes(role) && (
+        {/* NGO Dashboard */}
+        {["ngo", "authority", "admin"].includes(role) && (
           <Link
-            className="nav-btn bg-purple-600 text-white"
+            className={`${navBtn} bg-purple-600 text-white`}
             to="/ngo/dashboard"
           >
             NGO Dashboard
@@ -145,51 +180,42 @@ export default function Dashboard() {
 
         <button
           onClick={() => setShowTable("stations")}
-          className="nav-btn bg-indigo-500 text-white"
+          className={`${navBtn} bg-indigo-500 text-white`}
         >
           Stations
         </button>
 
-        <button
-          onClick={() => setShowTable("readings")}
-          className="nav-btn bg-cyan-500 text-white"
-        >
-          Readings
-        </button>
+        {/* Readings ONLY authority/admin */}
+        {["authority", "admin"].includes(role) && (
+          <button
+            onClick={() => setShowTable("readings")}
+            className={`${navBtn} bg-cyan-500 text-white`}
+          >
+            Readings
+          </button>
+        )}
 
-        <button
-          onClick={fetchVerifiedReports}
-          className="nav-btn bg-emerald-600 text-white"
-        >
-          Verified Reports
-        </button>
+        {/* Verified Reports ONLY authority/admin */}
+        {["authority", "admin"].includes(role) && (
+          <button
+            onClick={fetchVerifiedReports}
+            className={`${navBtn} bg-emerald-600 text-white`}
+          >
+            Verified Reports
+          </button>
+        )}
 
-        <Link className="nav-btn bg-red-600 text-white" to="/alerts">
+        <Link className={`${navBtn} bg-red-600 text-white`} to="/alerts">
           Alerts ({alerts.length})
         </Link>
 
-        <Link className="nav-btn bg-green-600 text-white" to="/historical">
+        <Link className={`${navBtn} bg-green-600 text-white`} to="/historical">
           📈 Historical
         </Link>
       </div>
 
       {/* CONTENT */}
       <div className="max-w-7xl mx-auto bg-white p-6 mt-6 rounded-xl shadow-lg">
-        <div className="flex gap-2 mb-4">
-          <input
-            value={userLocation}
-            onChange={(e) => setUserLocation(e.target.value)}
-            className="flex-1 border rounded-lg px-3 py-2"
-            placeholder="Enter location"
-          />
-          <button
-            onClick={() => geocodePlace(userLocation)}
-            className="bg-blue-600 text-white px-5 rounded-lg font-semibold hover:bg-blue-700"
-          >
-            Search
-          </button>
-        </div>
-
         <div className="h-[400px] mb-4 rounded-xl overflow-hidden shadow">
           <MapContainer center={center || [20, 77]} zoom={12} className="h-full">
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
@@ -218,10 +244,19 @@ export default function Dashboard() {
         </div>
 
         {showTable === "stations" && <StationTable stations={stations} />}
-        {showTable === "readings" && <ReadingTable stations={stations} />}
-        {showTable === "reports" && (
-          <VerifiedReportsTable reports={verifiedReports} />
-        )}
+
+        {showTable === "readings" &&
+          ["authority", "admin"].includes(role) && (
+            <ReadingTable stations={stations} />
+          )}
+
+        {showTable === "reports" &&
+          ["authority", "admin"].includes(role) && (
+            <VerifiedReportsTable
+              reports={verifiedReports}
+              loading={loadingReports}
+            />
+          )}
       </div>
     </div>
   );
@@ -231,6 +266,7 @@ export default function Dashboard() {
 const StationTable = ({ stations }) => (
   <>
     <h3 className="font-bold text-blue-700 mb-3">Water Stations</h3>
+    {stations.length === 0 && <p>No stations found.</p>}
     {stations.map((s) => (
       <div key={s.id} className="border p-3 mb-2 rounded-lg">
         <b>{s.name}</b>
@@ -243,30 +279,33 @@ const StationTable = ({ stations }) => (
 const ReadingTable = ({ stations }) => (
   <>
     <h3 className="font-bold text-blue-700 mb-3">Station Readings</h3>
+    {stations.length === 0 && <p>No readings found.</p>}
     {stations.map((s) => (
       <div key={s.id} className="border p-3 mb-2 rounded-lg">
         <b>{s.name}</b>
-        {s.latest_readings?.map((r, i) => (
-          <div key={i}>
-            {r.parameter}: {r.value}
-          </div>
-        ))}
+        {s.latest_readings?.length > 0 ? (
+          s.latest_readings.map((r, i) => (
+            <div key={i}>
+              {r.parameter}: {r.value}
+            </div>
+          ))
+        ) : (
+          <p>No readings available.</p>
+        )}
       </div>
     ))}
   </>
 );
 
-const VerifiedReportsTable = ({ reports }) => (
+const VerifiedReportsTable = ({ reports, loading }) => (
   <>
     <h3 className="font-bold text-blue-700 mb-3">Verified Reports</h3>
+    {loading && <p>Loading...</p>}
+    {!loading && reports.length === 0 && <p>No verified reports found.</p>}
     {reports.map((r) => (
       <div key={r.id} className="border p-3 mb-2 rounded-lg">
-        <p>
-          <b>Location:</b> {r.location}
-        </p>
-        <p>
-          <b>Status:</b> {r.status}
-        </p>
+        <p><b>Location:</b> {r.location}</p>
+        <p><b>Status:</b> {r.status}</p>
       </div>
     ))}
   </>

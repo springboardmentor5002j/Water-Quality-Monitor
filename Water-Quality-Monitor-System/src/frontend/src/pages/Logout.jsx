@@ -1,9 +1,20 @@
-import React from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 export default function Logout() {
-    return (
-      <div className="text-center mt-32">
-        <h2 className="text-3xl font-bold mb-4">You are logged out</h2>
-        <a className="text-blue-600 font-semibold" href="/login">Login Again</a>
-      </div>
-    );
-  }
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // remove login data
+    localStorage.removeItem("token");
+
+    // redirect to home
+    navigate("/");
+  }, [navigate]);
+
+  return (
+    <div style={{ padding: "40px", textAlign: "center" }}>
+      <h2>Logging out...</h2>
+    </div>
+  );
+}

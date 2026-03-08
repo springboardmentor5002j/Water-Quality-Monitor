@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API = "http://localhost:8000/auth/reset-password";
+const BASE_URL = "http://localhost:8000";
+const API = `${BASE_URL}/auth/reset-password`;
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [resetLink, setResetLink] = useState("");
-  const [messageType, setMessageType] = useState(""); // "success" | "error"
+  const [messageType, setMessageType] = useState(""); // success | error
 
   const submit = async (e) => {
     e.preventDefault();
@@ -46,7 +47,7 @@ export default function ForgotPassword() {
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
       style={{
-        backgroundImage: `url("/path-to-your-background-image.jpg")`,
+        backgroundImage: `url("/water.jpg")`
       }}
     >
       <div className="bg-white/70 backdrop-blur-md shadow-xl p-10 rounded-2xl w-full max-w-sm flex flex-col items-center">
@@ -55,6 +56,7 @@ export default function ForgotPassword() {
         </h1>
 
         <form onSubmit={submit} className="w-full">
+
           <input
             type="email"
             placeholder="Email Address"
@@ -92,6 +94,7 @@ export default function ForgotPassword() {
           >
             {loading ? "Sending..." : "Send Reset Link"}
           </button>
+
         </form>
       </div>
     </div>

@@ -5,8 +5,8 @@ export default function NGODashboard() {
   const navigate = useNavigate();
   const [reports, setReports] = useState([]);
   const [role, setRole] = useState("");
-  const [updatingIds, setUpdatingIds] = useState([]); // track reports being updated
-  const [loading, setLoading] = useState(false); // loading state
+  const [updatingIds, setUpdatingIds] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const BASE_URL = "http://127.0.0.1:8000";
 
@@ -76,7 +76,6 @@ export default function NGODashboard() {
 
       if (!res.ok) throw new Error("Failed to update status");
 
-      // Update UI immediately without refetch
       setReports((prev) =>
         prev.map((r) => (r.id === id ? { ...r, status } : r))
       );
@@ -91,14 +90,31 @@ export default function NGODashboard() {
   /* ---------------- UI ---------------- */
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h2 className="text-2xl font-bold mb-4">🏥 NGO Dashboard ({role})</h2>
+
+      {/* Header with Back Button */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">
+          🏥 NGO Dashboard ({role})
+        </h2>
+
+        <button
+          onClick={() => navigate("/dashboard")}
+          className="text-blue-600 hover:underline font-semibold"
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
 
       {loading && (
-        <div className="p-4 bg-blue-100 rounded mb-4">Loading reports...</div>
+        <div className="p-4 bg-blue-100 rounded mb-4">
+          Loading reports...
+        </div>
       )}
 
       {!loading && reports.length === 0 && (
-        <div className="p-4 bg-yellow-100 rounded">No reports available</div>
+        <div className="p-4 bg-yellow-100 rounded">
+          No reports available
+        </div>
       )}
 
       <div className="grid gap-4">
@@ -144,7 +160,9 @@ export default function NGODashboard() {
                       onClick={() => updateStatus(r.id, "verified")}
                       disabled={isUpdating}
                       className={`px-3 py-1 rounded text-white ${
-                        isUpdating ? "bg-green-300 cursor-not-allowed" : "bg-green-600"
+                        isUpdating
+                          ? "bg-green-300 cursor-not-allowed"
+                          : "bg-green-600"
                       }`}
                     >
                       {isUpdating ? "Updating..." : "Verify"}
@@ -154,7 +172,9 @@ export default function NGODashboard() {
                       onClick={() => updateStatus(r.id, "rejected")}
                       disabled={isUpdating}
                       className={`px-3 py-1 rounded text-white ${
-                        isUpdating ? "bg-red-300 cursor-not-allowed" : "bg-red-600"
+                        isUpdating
+                          ? "bg-red-300 cursor-not-allowed"
+                          : "bg-red-600"
                       }`}
                     >
                       {isUpdating ? "Updating..." : "Reject"}
